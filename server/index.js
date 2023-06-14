@@ -4,7 +4,6 @@ const PORT = 4000;
 const User = require("./models/User");
 const Message = require("./models/Message");
 const jwt = require("jsonwebtoken");
-const jwtSecret = "MORTIMERXJEFFERSON";
 const cors = require("cors");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
@@ -20,9 +19,9 @@ app.use(
   cors({
     credentials: true,
     origin: [
-      process.env.CLIENT_URL,
+      process.env.LOCAL_CLIENT_URL,
+      process.env.PROD_CLIENT_URL,
       "http://127.0.0.1:4040",
-      "https://cheesemiss.onrender.com/",
     ],
   })
 );
@@ -38,7 +37,7 @@ app.get("/", (req, res) => {
 app.get("/user", (req, res) => {
   const { token } = req.cookies;
   try {
-    jwt.verify(token, jwtSecret, (err, userData) => {
+    jwt.verify(token, process.env.JWT_SECRET, (err, userData) => {
       console.log(userData);
       res.json(userData);
     });
@@ -58,15 +57,19 @@ app.post("/register", async (req, res) => {
     });
     //CREATES TOKEN USING JWT
     //USES USERID AS PAYLOAD INSIDE TOKEN
-    jwt.sign({ userId: newUser._id, username }, jwtSecret, (err, token) => {
-      if (err) throw err;
-      res
-        .cookie("token", token, { sameSite: "none", secure: true })
-        .status(201)
-        .json({
-          id: newUser._id,
-        });
-    });
+    jwt.sign(
+      { userId: newUser._id, username },
+      process.env.JWT_SECRET,
+      (err, token) => {
+        if (err) throw err;
+        res
+          .cookie("token", token, { sameSite: "none", secure: true })
+          .status(201)
+          .json({
+            id: newUser._id,
+          });
+      }
+    );
   } catch (error) {
     console.log(error);
     res.status(409).json(error);
@@ -74,22 +77,25 @@ app.post("/register", async (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
-  console.log("attempting to login");
   const { username, password } = req.body;
   try {
     const user = await User.findOne({ username });
     if (user) {
       const verifiedUser = bcrypt.compareSync(password, user.password);
       if (verifiedUser) {
-        jwt.sign({ userId: user._id, username }, jwtSecret, (err, token) => {
-          if (err) throw err.message;
-          res
-            .cookie("token", token, { sameSite: "none", secure: true })
-            .status(201)
-            .json({
-              id: user._id,
-            });
-        });
+        jwt.sign(
+          { userId: user._id, username },
+          process.env.JWT_SECRET,
+          (err, token) => {
+            if (err) throw err.message;
+            res
+              .cookie("token", token, { sameSite: "none", secure: true })
+              .status(201)
+              .json({
+                id: user._id,
+              });
+          }
+        );
       } else {
         console.log("no user found");
         res.status(401).json({ error: "Invalid Username or Password" });
@@ -174,11 +180,12 @@ wss.on("connection", (connection, req) => {
 
   const cookies = req.headers.cookie; //GETS COOKIE FROM THE CONNECTED USER
 
-  if (cookies !== "token=") {
+  if (cookies) {
     const tokenStr = cookies.split(";").find((str) => str.startsWith("token="));
+
     if (tokenStr) {
       const token = tokenStr.split("=")[1];
-      jwt.verify(token, jwtSecret, (error, userData) => {
+      jwt.verify(token, process.env.JWT_SECRET, (error, userData) => {
         if (error) throw error;
         const { userId, username } = userData;
         connection.userId = userId;
