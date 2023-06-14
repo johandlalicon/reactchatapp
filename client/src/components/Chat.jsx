@@ -22,7 +22,8 @@ function Chat() {
   //AUTOMATICALLY CONNECTS CLIENT TO SERVER ONSET OF PAGE LOAD OR IF DATA RECEIVED FROM SERVER SOCKET
 
   function wsConnect() {
-    const ws = new WebSocket("ws://localhost:4000");
+    // ws://localhost:4000
+    const ws = new WebSocket("ws://cheesemiss-api.onrender.com");
     setWs(ws);
     ws.addEventListener("message", handleMessage); //ONCE MSG COMES IN IT GETS HANDLED BY FUNCTION
     ws.addEventListener("close", () => {

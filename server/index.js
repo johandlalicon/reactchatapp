@@ -139,7 +139,7 @@ app.post("/logout", (req, res) => {
 
 // ========================================= //
 const server = app.listen(PORT, () => {
-  console.log("LISTENING ON PORT", PORT);
+  console.log("LISTENING ON PORT", process.env.PORT);
   require("./dbconnection");
 });
 

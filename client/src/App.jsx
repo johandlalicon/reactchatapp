@@ -4,7 +4,7 @@ import Routes from "./Routes";
 import { UserContextProvider } from "./UserContext";
 
 function App() {
-  axios.defaults.baseURL = "http://localhost:4000";
+  axios.defaults.baseURL = "https://cheesemiss-api.onrender.com";
   axios.defaults.withCredentials = true; //ALLOWS SERVER TO AUTHORIZE BASED ON CREDENTIALS
 
   return (
