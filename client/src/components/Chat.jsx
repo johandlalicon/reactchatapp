@@ -23,7 +23,7 @@ function Chat() {
 
   function wsConnect() {
     // ws://localhost:4000
-    const ws = new WebSocket("ws://cheesemiss-api.onrender.com");
+    const ws = new WebSocket("wss://cheesemiss-api.onrender.com");
     setWs(ws);
     ws.addEventListener("message", handleMessage); //ONCE MSG COMES IN IT GETS HANDLED BY FUNCTION
     ws.addEventListener("close", () => {
