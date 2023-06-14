@@ -180,9 +180,8 @@ wss.on("connection", (connection, req) => {
 
   const cookies = req.headers.cookie; //GETS COOKIE FROM THE CONNECTED USER
 
-  if (cookies) {
+  if (cookies !== "token=") {
     const tokenStr = cookies.split(";").find((str) => str.startsWith("token="));
-
     if (tokenStr) {
       const token = tokenStr.split("=")[1];
       jwt.verify(token, process.env.JWT_SECRET, (error, userData) => {
