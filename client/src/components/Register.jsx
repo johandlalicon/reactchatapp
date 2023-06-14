@@ -14,6 +14,7 @@ function Register() {
   async function handleSubmit(e) {
     e.preventDefault();
     const url = isRegistered ? "login" : "register";
+    console.log("attempting to login");
     try {
       const { data } = await axios.post(`/${url}`, {
         username,

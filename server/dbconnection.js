@@ -1,6 +1,10 @@
 const mongoose = require("mongoose");
+const dbUrl = process.env.MONGODB_URL;
+const localUrl = "mongodb://localhost:27017/new-chat-app";
+// mongodb+srv://orangeundies:<password>@cluster0.eaqxexu.mongodb.net/?retryWrites=true&w=majority
+
 mongoose
-  .connect("mongodb://localhost:27017/new-chat-app", {
+  .connect(dbUrl, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })

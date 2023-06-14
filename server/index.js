@@ -19,7 +19,11 @@ app.use(cookieParser());
 app.use(
   cors({
     credentials: true,
-    origin: [process.env.CLIENT_URL, "http://127.0.0.1:4040"],
+    origin: [
+      process.env.CLIENT_URL,
+      "http://127.0.0.1:4040",
+      "https://cheesemiss.onrender.com/",
+    ],
   })
 );
 
@@ -70,6 +74,7 @@ app.post("/register", async (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
+  console.log("attempting to login");
   const { username, password } = req.body;
   try {
     const user = await User.findOne({ username });
@@ -86,6 +91,7 @@ app.post("/login", async (req, res) => {
             });
         });
       } else {
+        console.log("no user found");
         res.status(401).json({ error: "Invalid Username or Password" });
       }
     }
@@ -167,7 +173,8 @@ wss.on("connection", (connection, req) => {
   });
 
   const cookies = req.headers.cookie; //GETS COOKIE FROM THE CONNECTED USER
-  if (cookies) {
+
+  if (cookies !== "token=") {
     const tokenStr = cookies.split(";").find((str) => str.startsWith("token="));
     if (tokenStr) {
       const token = tokenStr.split("=")[1];
