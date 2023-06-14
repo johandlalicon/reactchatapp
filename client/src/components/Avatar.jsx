@@ -17,7 +17,7 @@ function Avatar({ userId, username, online }) {
     <div
       className={`w-8 h-8 bg-red-200 rounded-full text-center flex items-center ${color} relative`}
     >
-      {username && (
+      {username.length !== 0 && (
         <div className="text-center w-full opacity-70">{username[0]}</div>
       )}
 
