@@ -3,6 +3,8 @@ import "./App.css";
 import Routes from "./Routes";
 import { UserContextProvider } from "./UserContext";
 
+//http://localhost:4000/
+//https://cheesemiss-api.onrender.com
 function App() {
   axios.defaults.baseURL = "https://cheesemiss-api.onrender.com";
   axios.defaults.withCredentials = true; //ALLOWS SERVER TO AUTHORIZE BASED ON CREDENTIALS

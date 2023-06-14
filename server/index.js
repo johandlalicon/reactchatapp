@@ -22,6 +22,7 @@ app.use(
       process.env.LOCAL_CLIENT_URL,
       process.env.PROD_CLIENT_URL,
       "http://127.0.0.1:4040",
+      "http://127.0.0.1:4041",
     ],
   })
 );

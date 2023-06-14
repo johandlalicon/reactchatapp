@@ -23,6 +23,7 @@ function Chat() {
 
   function wsConnect() {
     // ws://localhost:4000
+    // "wss://cheesemiss-api.onrender.com"
     const ws = new WebSocket("wss://cheesemiss-api.onrender.com");
     setWs(ws);
     ws.addEventListener("message", handleMessage); //ONCE MSG COMES IN IT GETS HANDLED BY FUNCTION
@@ -143,11 +144,11 @@ function Chat() {
 
   return (
     <div className="flex h-screen">
-      <div className="bg-white w-1/4 pt-4 flex flex-col content-center">
+      <div className="bg-white w-1/4 pt-4 flex flex-col content-center flex-shrink-0">
         <div className="flex-grow">
           <div className="flex justify-evenly">
             <Logo />
-            <button className="justify-end" onClick={() => setOpenSearch(true)}>
+            {/* <button className="justify-end" onClick={() => setOpenSearch(true)}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -162,7 +163,7 @@ function Chat() {
                   d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z"
                 />
               </svg>
-            </button>
+            </button> */}
           </div>
           <div className="flex place-content-center">
             {openSearch && <Search id={id} />}
@@ -187,7 +188,7 @@ function Chat() {
             />
           ))}
         </div>
-        <div className="p-2 text-center items-center flex">
+        <div className="p-2 text-center items-center flex flex-col gap-2 md:flex-row">
           <div className="flex">
             {" "}
             <svg
@@ -208,7 +209,7 @@ function Chat() {
           </div>
 
           <button
-            className="text-sm text-gray-500 bg-blue-50 px-4 py-2 border rounded-sm"
+            className="text-sm text-gray-500 bg-blue-50 px-2 py-2 border rounded-sm"
             onClick={userLogout}
           >
             LOG OUT

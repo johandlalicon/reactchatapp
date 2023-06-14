@@ -15,17 +15,18 @@ function Avatar({ userId, username, online }) {
 
   return (
     <div
-      className={`w-8 h-8 bg-red-200 rounded-full text-center flex items-center ${color} relative`}
+      className={`w-14 h-14 bg-red-200 rounded-full text-center flex items-center ${color} relative md:w-10 md:h-10`}
     >
-      {username.length !== 0 && (
-        <div className="text-center w-full opacity-70">{username[0]}</div>
+      {username && username.length !== 0 && (
+        <div className="text-center w-full opacity-70 font-bold">
+          {username[0]}
+        </div>
       )}
-
       {online && (
-        <div className="absolute w-3 h-3 bg-green-400 bottom-0 right-0 rounded-full border border-white"></div>
+        <div className="absolute w-4 h-4 bg-green-400 bottom-0 right-0 rounded-full border border-white"></div>
       )}
       {!online && (
-        <div className="absolute w-3 h-3 bg-gray-300 bottom-0 right-0 rounded-full border border-white"></div>
+        <div className="absolute w-4 h-4 bg-gray-300 bottom-0 right-0 rounded-full border border-white md:w-3 md:h-3"></div>
       )}
     </div>
   );
