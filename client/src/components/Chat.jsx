@@ -12,6 +12,7 @@ function Chat() {
   const [ws, setWs] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState({});
   const [offlineUsers, setOfflineUsers] = useState({});
+  const [displayFriends, setDisplayFriends] = useState({});
   const [selectUser, setSelectUser] = useState("");
   const [newMsg, setNewMsg] = useState("");
   const [messages, setMessages] = useState([]);
@@ -19,6 +20,7 @@ function Chat() {
 
   const { username, id, setId, setUsername } = useContext(UserContext);
   const viewNewMsg = useRef();
+
   //AUTOMATICALLY CONNECTS CLIENT TO SERVER ONSET OF PAGE LOAD OR IF DATA RECEIVED FROM SERVER SOCKET
 
   function wsConnect() {
@@ -42,16 +44,17 @@ function Chat() {
   //RECEIVES AND HANDLES ALL DATA FROM SERVER THROUGH WEBSOCKET
   function handleMessage(e) {
     const messageData = JSON.parse(e.data);
-
     if ("online" in messageData) {
       showUsersOnline(messageData.online);
-    } else {
-      setMessages((prev) => [
-        ...prev,
-        {
-          ...messageData,
-        },
-      ]);
+    } else if ("text" in messageData) {
+      if (messageData.sender === selectUser) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            ...messageData,
+          },
+        ]);
+      }
     }
   }
   //FILTERS THE DATA TO SHOW CONNECTED USERS
@@ -63,6 +66,15 @@ function Chat() {
       }
     });
     setOnlineUsers(users);
+    showUserFriends();
+  }
+
+  function showUserFriends() {
+    const getFriendList = async () => {
+      const response = await axios.get("/friendslist");
+      setDisplayFriends(response.data);
+    };
+    getFriendList();
   }
 
   //SENDS MESSAGE TO SERVER
@@ -88,40 +100,17 @@ function Chat() {
     setNewMsg("");
   }
 
-  function userLogout(e) {
-    const toLogout = async () => {
-      try {
-        await axios.post("/logout");
-        setWs(null);
-        setId(null);
-        setUsername(null);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    toLogout();
-  }
-
   useEffect(() => {
-    const getAllUsers = async () => {
+    const showUserFriends = async () => {
       try {
-        const response = await axios.get("/allusers");
-        const filterOfflineUsers = response.data
-          .filter((user) => user._id !== id)
-          .filter((users) => !Object.keys(onlineUsers).includes(users._id));
-
-        const offlineUsers = {};
-        filterOfflineUsers.forEach((user) => {
-          offlineUsers[user._id] = user.username;
-        });
-        setOfflineUsers(offlineUsers);
+        const response = await axios.get("/friendslist");
+        setDisplayFriends(response.data);
       } catch (error) {
         console.log(error);
       }
     };
-    getAllUsers();
-    console.log(onlineUsers, offlineUsers);
-  }, [onlineUsers]);
+    showUserFriends();
+  }, [displayFriends]);
 
   //GETS MESSAGE ARCHIVE FROM SERVER
   useEffect(() => {
@@ -143,147 +132,140 @@ function Chat() {
   }, [messages]);
 
   return (
-    <div className="flex h-screen">
-      <div className="bg-white w-1/4 pt-4 flex flex-col content-center flex-shrink-0">
-        <div className="flex-grow">
-          <div className="flex justify-evenly">
-            <Logo />
-            {/* <button className="justify-end" onClick={() => setOpenSearch(true)}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-6 h-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z"
-                />
-              </svg>
-            </button> */}
-          </div>
-          <div className="flex place-content-center">
-            {openSearch && <Search id={id} />}
-          </div>
-
-          {Object.keys(onlineUsers).map((user) => (
-            <Contacts
-              id={user}
-              username={onlineUsers[user]}
-              onClick={() => setSelectUser(user)}
-              selectUser={selectUser}
-              online={true}
-            />
-          ))}
-          {Object.keys(offlineUsers).map((user) => (
-            <Contacts
-              id={user}
-              username={offlineUsers[user]}
-              onClick={() => setSelectUser(user)}
-              selectUser={selectUser}
-              online={false}
-            />
-          ))}
+    <div className="relative">
+      {openSearch && (
+        <div
+          className="filter-none fixed z-50 
+            top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2"
+        >
+          <Search myId={id} openSearch={setOpenSearch} />
         </div>
-        <div className="p-2 text-center items-center flex flex-col gap-2 md:flex-row">
-          <div className="flex">
-            {" "}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-6 h-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+      )}
+
+      <div className={"flex h-screen"}>
+        <div
+          className={`bg-white w-1/4 flex flex-col content-center flex-shrink-0 ${
+            openSearch ? "blur" : ""
+          }`}
+        >
+          <div className="flex-grow">
+            {Object.keys(displayFriends).map((user) => (
+              <Contacts
+                key={user}
+                id={user}
+                username={displayFriends[user]}
+                onClick={() => setSelectUser(user)}
+                selectUser={selectUser}
+                online={user in onlineUsers ? true : false}
               />
-            </svg>
-            <span className="mr-4">{username}</span>
+            ))}
           </div>
 
-          <button
-            className="text-sm text-gray-500 bg-blue-50 px-2 py-2 border rounded-sm"
-            onClick={userLogout}
-          >
-            LOG OUT
-          </button>
+          <div className="p-2 text-center items-center flex flex-col gap-2 md:flex-row">
+            <div className="flex">
+              <Logo
+                setWs={setWs}
+                setId={setId}
+                setUsername={setUsername}
+                myId={id}
+                setOpenSearch={setOpenSearch}
+                username={username}
+              />{" "}
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div className="bg-blue-50 w-3/4 flex flex-col">
-        <div className="flex-grow p-2">
-          {!selectUser && (
-            <div className="h-full flex flex-grow items-center justify-center">
-              <div className="text-gray-400">
-                &larr; Start conversation with your friends
-              </div>
+        <div
+          className={
+            "flex flex-col flex-nowrap bg-blue-50 w-3/4 " +
+            `${openSearch ? "blur" : ""}`
+          }
+        >
+          {!!selectUser && (
+            <div className="flex items-center gap-5 px-2 py-2 border-b border-l border-gray-200 bg-white">
+              <Avatar
+                username={onlineUsers[selectUser] || displayFriends[selectUser]}
+                online={onlineUsers[selectUser] ? true : false}
+              />
+              <span className="text-lg font-semibold">
+                {displayFriends[selectUser]}
+              </span>
             </div>
           )}
-          {!!selectUser && (
-            <div className="h-full relative">
-              <div className="overflow-y-scroll absolute inset-0">
-                {uniqBy(messages, "_id").map((message) => (
-                  <div
-                    className={
-                      message.sender === id ? "text-right" : "text-left"
-                    }
-                  >
+
+          <div className="flex-grow p-2">
+            {!selectUser && (
+              <div className="h-full flex flex-grow items-center justify-center">
+                <div className="text-gray-400">
+                  {displayFriends === 0
+                    ? "&larr; Start conversation with your friends"
+                    : "You have no friends listed yet, add friends by clicking the cheese! Hint: Try adding Rick and Morty characters"}
+                </div>
+              </div>
+            )}
+            {!!selectUser && (
+              <div className="h-full relative">
+                <div className="overflow-y-scroll absolute inset-0">
+                  {uniqBy(messages, "_id").map((message) => (
                     <div
                       className={
-                        (message.sender === id
-                          ? "bg-blue-500 text-white text-left"
-                          : "bg-white text-gray-500") +
-                        " rounded-md inline-block my-2"
+                        message.sender === id ? "text-right" : "text-left"
                       }
                     >
-                      <div className="p-2">{message.text}</div>
+                      <div
+                        className={
+                          (message.sender === id
+                            ? "bg-blue-500 text-white text-left"
+                            : "bg-white text-gray-500") +
+                          " rounded-md inline-block my-2"
+                        }
+                      >
+                        <div className="p-2">{message.text}</div>
+                      </div>
                     </div>
-                  </div>
-                ))}
-                <div ref={viewNewMsg} />
+                  ))}
+                  <div ref={viewNewMsg} />
+                </div>
               </div>
+            )}
+          </div>
+          {!!selectUser && (
+            <div className="">
+              <form
+                className="flex gap-2 mx-2 my-2 sticky"
+                onSubmit={sendNewMsg}
+              >
+                <input
+                  value={newMsg}
+                  type="text"
+                  placeholder="Type message here"
+                  className="bg-white border p-2 flex-grow rounded-sm w-full"
+                  onChange={(e) => setNewMsg(e.target.value)}
+                />
+                <button
+                  type="submit"
+                  className="text-white bg-blue-500 p-2 rounded-sm"
+                  disabled={newMsg ? false : true}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-6 h-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
+                    />
+                  </svg>
+                </button>
+              </form>
             </div>
           )}
         </div>
-
-        {!!selectUser && (
-          <form className="flex gap-2 mx-2 my-2" onSubmit={sendNewMsg}>
-            <input
-              value={newMsg}
-              type="text"
-              placeholder="Type message here"
-              className="bg-white border p-2 flex-grow rounded-sm"
-              onChange={(e) => setNewMsg(e.target.value)}
-            />
-            <button
-              type="submit"
-              className="text-white bg-blue-500 p-2 rounded-sm"
-              disabled={newMsg ? false : true}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-6 h-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
-                />
-              </svg>
-            </button>
-          </form>
-        )}
       </div>
     </div>
   );

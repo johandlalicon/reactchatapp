@@ -1,71 +1,91 @@
 import axios from "axios";
-import { debounce } from "lodash";
-import { React, useState, useEffect } from "react";
 
-function Search({ id }) {
-  const [contactName, setContactName] = useState("");
+import { React, useState, useEffect } from "react";
+import Avatar from "./Avatar";
+
+function Search({ myId, openSearch }) {
   const [searchResult, setSearchResult] = useState("");
+  const [searchCriteria, setSearchCriteria] = useState("");
 
   useEffect(() => {
     const searchContacts = async () => {
-      try {
-        const response = await axios.get("/allusers");
-        const allUsers = response.data;
-        const filteredUsers = allUsers.filter((user) => {
+      const response = await axios.get("/allusers");
+      const allUsers = response.data;
+      const locateUser = allUsers
+        .filter((user) => {
           return user.username
             .toLowerCase()
-            .includes(contactName.toLowerCase());
+            .includes(searchCriteria.toLowerCase());
+        })
+        .map((user) => {
+          return user;
         });
+      setSearchResult(locateUser);
+    };
+    searchContacts();
+  }, [searchCriteria]);
 
-        setSearchResult(filteredUsers);
+  function handleAddContact(userId) {
+    if (searchCriteria) {
+      try {
+        const addUser = async () => {
+          const response = await axios.post(`/addcontact/${userId}/${myId}`);
+          if (response.status === 200) {
+            openSearch(false);
+          }
+        };
+        addUser();
       } catch (error) {
         console.log(error);
       }
-    };
-    searchContacts();
-  }, [contactName]);
-
-  function handleAddContact() {
-    if (searchResult) {
-      const addContact = async () => {
-        await axios.post(`/addcontact/${searchResult[0]._id}/${id}`);
-      };
-      addContact();
     }
   }
 
   return (
-    <div>
-      <input
-        type="text"
-        className="border px-1 rounded-sm"
-        onChange={(e) => {
-          setContactName(e.target.value);
-        }}
-      />
-      {searchResult.length === 0 ? (
-        <p className="text-gray-400">No contacts found</p>
-      ) : (
-        <div className="p-2 flex justify-between">
-          <div>{searchResult[0].username}</div>
-          <button onClick={() => handleAddContact()}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-6 h-6"
+    <div className="bg-white relative">
+      <div className="p-4 border rounded-sm shadow-md">
+        <button
+          className="fixed top-0 right-0 p-1"
+          onClick={() => openSearch(false)}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-4 h-4"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+        <h1 className="text-center pb-2">Search Friends</h1>
+        <input
+          type="text"
+          className="border px-1 rounded-sm"
+          onChange={(e) => {
+            setSearchCriteria(e.target.value);
+          }}
+        />
+        {searchResult.length !== 0 ? (
+          <div className="pt-4 text-center">
+            <button
+              onClick={(e) => {
+                handleAddContact(searchResult[0]._id);
+              }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </button>
-        </div>
-      )}
+              {!searchCriteria ? "" : searchResult[0].username}
+              {searchCriteria && <Avatar username={searchResult[0].username} />}
+            </button>
+          </div>
+        ) : (
+          <div>No users found</div>
+        )}
+      </div>
     </div>
   );
 }

@@ -29,21 +29,34 @@ app.use(
 
 const bcryptSalt = bcrypt.genSaltSync(10);
 
+async function getMyId(req) {
+  return new Promise((resolve, reject) => {
+    const token = req.cookies?.token;
+    if (token) {
+      jwt.verify(token, process.env.JWT_SECRET, (err, myData) => {
+        if (err) throw err;
+        resolve(myData);
+      });
+    } else {
+      reject();
+    }
+  });
+}
+
 app.get("/", (req, res) => {
   res.json("test ok");
 });
 
 //GETS USER DATA USING TOKEN THEN VERIFY TOKEN AND PASSED IN USING useContext TO CHILDREN COMP
 
-app.get("/user", (req, res) => {
+app.get("/user", async (req, res) => {
   const { token } = req.cookies;
   try {
     jwt.verify(token, process.env.JWT_SECRET, (err, userData) => {
-      console.log(userData);
       res.json(userData);
     });
   } catch (error) {
-    console.log(err);
+    console.log(error);
     throw error;
   }
 });
@@ -79,6 +92,7 @@ app.post("/register", async (req, res) => {
 
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
+
   try {
     const user = await User.findOne({ username });
     if (user) {
@@ -89,6 +103,7 @@ app.post("/login", async (req, res) => {
           process.env.JWT_SECRET,
           (err, token) => {
             if (err) throw err.message;
+
             res
               .cookie("token", token, { sameSite: "none", secure: true })
               .status(201)
@@ -103,21 +118,24 @@ app.post("/login", async (req, res) => {
       }
     }
   } catch (error) {
-    console.log("mongo issue");
+    console.log("mongo issue: ", error.message);
     res.status(404).json({ error: "User not found" });
   }
 });
 
 app.get("/messages/:recipientId/:myId", async (req, res) => {
   const { recipientId, myId } = req.params;
-  const messageArchive = await Message.find({
-    sender: { $in: [myId, recipientId] },
-    recipient: { $in: [myId, recipientId] },
-  }).sort({
-    createdAt: 1,
-  });
-
-  res.json(messageArchive);
+  try {
+    const messageArchive = await Message.find({
+      sender: { $in: [myId, recipientId] },
+      recipient: { $in: [myId, recipientId] },
+    }).sort({
+      createdAt: 1,
+    });
+    res.json(messageArchive);
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 app.get("/allusers", async (req, res) => {
@@ -125,17 +143,61 @@ app.get("/allusers", async (req, res) => {
   res.json(allUsers);
 });
 
+app.get("/friendslist", async (req, res) => {
+  try {
+    const user = await getMyId(req);
+    const friendList = {};
+    const getFriends = await User.findById(user.userId).populate(
+      "friends",
+      "username"
+    );
+    getFriends.friends.forEach((friend) => {
+      friendList[friend._id] = friend.username;
+    });
+    res.json(friendList);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
 app.post("/addcontact/:contactId/:myId", async (req, res) => {
   const { contactId, myId } = req.params;
-  const updatedFriendList = await User.findOneAndUpdate(
-    { _id: myId },
-    { $push: { friends: contactId } }
-  );
-  console.log(updatedFriendList.friends);
+  const user = await User.findById(myId);
+  try {
+    if (user.friends.includes(contactId)) {
+      res.status(400).json("Existing contact");
+    } else {
+      const updatedFriendList = await User.findOneAndUpdate(
+        { _id: myId },
+        { $push: { friends: contactId } }
+      );
+      console.log(updatedFriendList);
+      res.status(200).json("Success");
+    }
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 app.post("/logout", (req, res) => {
-  res.cookie("token", "", { sameSite: "none", secure: true }).json("Logout");
+  try {
+    res.cookie("token", "", { sameSite: "none", secure: true }).json("Logout");
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+app.delete("/deleteuser/:myId", async (req, res) => {
+  const { myId } = req.params;
+  try {
+    await User.findByIdAndDelete(myId);
+    await Message.deleteMany({
+      $or: [{ sender: myId }, { recipient: myId }],
+    });
+    res.cookie("token", "", { sameSite: "none", secure: true }).json("Delete");
+  } catch (error) {
+    console.error("Error deleting user account:", error);
+  }
 });
 
 // ========================================= //
@@ -148,7 +210,6 @@ const wss = new ws.WebSocketServer({ server });
 
 wss.on("connection", (connection, req) => {
   console.log("WS Connected");
-
   function usersConnected() {
     [...wss.clients].forEach((client) => {
       client.send(
