@@ -132,7 +132,7 @@ function Chat() {
   }, [messages]);
 
   return (
-    <div className="relative">
+    <div className="relative md:text-2xl">
       {openSearch && (
         <div
           className="filter-none fixed z-50 
@@ -142,13 +142,13 @@ function Chat() {
         </div>
       )}
 
-      <div className={"flex h-screen"}>
+      <div className={"flex h-screen "}>
         <div
-          className={`bg-white w-1/4 flex flex-col content-center flex-shrink-0 ${
+          className={` bg-white w-1/4 flex flex-col content-center flex-shrink-0 ${
             openSearch ? "blur" : ""
           }`}
         >
-          <div className="flex-grow">
+          <div className="flex-grow justify-center">
             {Object.keys(displayFriends).map((user) => (
               <Contacts
                 key={user}

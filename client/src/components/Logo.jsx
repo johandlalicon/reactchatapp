@@ -34,7 +34,7 @@ function Logo({ setWs, setId, setUsername, myId, setOpenSearch, username }) {
   }
 
   return (
-    <div className="text-center pt-4">
+    <div className="text-center pt-4 text-xl">
       <div className={showMenu ? "visible" : "hidden"}>
         <ul className="py-4 flex flex-col gap-2 text-sm text-gray-500">
           <li className="border-b border-gray-200 flex items-center justify-center pb-2">
@@ -148,7 +148,7 @@ function Logo({ setWs, setId, setUsername, myId, setOpenSearch, username }) {
         <img src={cheeseLogo} className="w-8 h-8 md:flex-grow" />
       </button>
       <div className="w-full text-sm p-0">
-        Hello <span className="font-medium">{username}</span>!
+        Hello <span className="font-medium md:text-xl">{username}</span>!
       </div>
     </div>
   );

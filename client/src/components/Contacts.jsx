@@ -12,7 +12,7 @@ function Contacts({ id, username, onClick, selectUser, online }) {
       onClick={() => onClick(id)}
     >
       {selectUser === id && <div className="w-1 bg-blue-500 h-12"></div>}
-      <div className="flex pl-4 py-2 items-center gap-2">
+      <div className="flex pl-4 py-2 items-center gap-2 ">
         <Avatar username={username} userId={id} online={online} />
         <span className="text-gray-800 invisible md:visible">{username}</span>
       </div>

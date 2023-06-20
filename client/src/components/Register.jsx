@@ -37,7 +37,7 @@ function Register() {
   }
 
   function handleGuestLogin() {
-    const guestUsername = "Guest1";
+    const guestUsername = "Guest";
     const guestPassword = "123";
 
     const loginUser = async () => {
